@@ -1,0 +1,34 @@
+
+version: 2
+
+models:
+  - name: stg_ppd_all_transactions
+    description: "Cleaned and typed Land Registry Price Paid Data (raw staging layer)."
+
+    columns:
+      - name: transaction_id
+        description: "The primary key for this table"
+        tests:
+          - unique
+          - not_null
+
+      - name: price
+        description: "The price paid for the property"
+        tests:
+          - not_null
+
+      - name: date_of_transfer
+        description: "The date the property was transferred"
+        tests:
+          - not_null
+
+      - name: property_type
+        description: "The type of property (e.g., detached, semi-detached, terraced, flat)"
+        tests:
+          - accepted_values:
+              values: ['D', 'S', 'T', 'F', 'O']
+
+      - name: county
+        description: "The county where the property is located"
+        tests:
+          - not_null

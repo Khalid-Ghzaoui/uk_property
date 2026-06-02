@@ -1,0 +1,7 @@
+sources:
+  - name: property_raw
+    database: uk-property-analytics
+    schema: property_raw
+    tables:
+      - name: ppd_all_transactions
+      - name: ons_cpih_index_monthly

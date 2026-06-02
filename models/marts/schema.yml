@@ -1,0 +1,37 @@
+version: 2
+
+models:
+  - name: mart_london_vs_england_month
+    description: "Monthly comparison of London vs England housing market metrics."
+    columns:
+      - name: year_month
+        tests:
+          - not_null
+          - unique
+
+  - name: mart_london_postcode_month
+    description: "Monthly postcode-level aggregated metrics for Greater London."
+    columns:
+      - name: year_month
+        tests: [not_null]
+      - name: postcode
+        tests: [not_null]
+
+  - name: mart_london_borough_month
+    description: "Monthly borough-level aggregated metrics for Greater London."
+    columns:
+      - name: year_month
+        tests: [not_null]
+      - name: borough
+        tests: [not_null]
+
+  - name: mart_london_property_type_month
+    description: "Monthly property-type level aggregated metrics for Greater London."
+    columns:
+      - name: year_month
+        tests: [not_null]
+      - name: property_type
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['D', 'S', 'T', 'F', 'O']
