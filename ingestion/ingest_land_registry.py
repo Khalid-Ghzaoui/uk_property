@@ -56,14 +56,14 @@ def get_run_month():
 # ─── DOWNLOAD ─────────────────────────────────────────────
 def download_monthly_update(run_month: str) -> pd.DataFrame:
     url = (
-        f"http://prod.publicdata.landregistry.gov.uk.s3-website-eu-west-1.amazonaws.com"
+        f"https://prod.publicdata.landregistry.gov.uk.s3-website-eu-west-1.amazonaws.com"
         f"/pp-monthly-update-{run_month}.csv"
     )
     print(f"Downloading: {url}")
     response = requests.get(url, timeout=120)
 
-    if response.status_code == 404:
-        print(f"No update file found for {run_month} — may not be published yet")
+    if response.status_code in (403, 404):
+        print(f"No accessible update file found for {run_month} — may not be published yet")
         sys.exit(0)
 
     response.raise_for_status()
