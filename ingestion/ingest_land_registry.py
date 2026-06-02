@@ -91,23 +91,75 @@ def validate(df: pd.DataFrame, run_month: str):
 
 # ─── UPLOAD ───────────────────────────────────────────────
 def upload_to_bigquery(df: pd.DataFrame, client: bigquery.Client):
-    table_ref = f"{PROJECT_ID}.{DATASET_ID}.{TABLE_ID}"
+    target_table = f"{PROJECT_ID}.{DATASET_ID}.{TABLE_ID}"
+    staging_table = f"{PROJECT_ID}.{DATASET_ID}.ppd_monthly_staging"
 
     job_config = bigquery.LoadJobConfig(
         schema=SCHEMA,
-        write_disposition="WRITE_APPEND",  # append monthly updates
+        write_disposition="WRITE_TRUNCATE",
     )
 
-    job = client.load_table_from_dataframe(
+    # 1. Load monthly file into staging table, replacing whatever was there before
+    load_job = client.load_table_from_dataframe(
         df,
-        table_ref,
+        staging_table,
         job_config=job_config
     )
-    job.result()
+    load_job.result()
 
-    table = client.get_table(table_ref)
-    print(f"Upload complete. Total rows in table: {table.num_rows:,}")
+    print(f"Loaded {len(df):,} rows into staging table: {staging_table}")
 
+    # 2. Insert only transaction_ids that do not already exist in the target table
+    merge_sql = f"""
+    MERGE `{target_table}` AS target
+    USING `{staging_table}` AS source
+    ON target.transaction_id = source.transaction_id
+
+    WHEN NOT MATCHED THEN
+      INSERT (
+        transaction_id,
+        price,
+        date_of_transfer_raw,
+        postcode,
+        property_type,
+        old_new,
+        duration,
+        paon,
+        saon,
+        street,
+        locality,
+        town_city,
+        district,
+        county,
+        ppd_category_type,
+        record_status
+      )
+      VALUES (
+        source.transaction_id,
+        source.price,
+        source.date_of_transfer_raw,
+        source.postcode,
+        source.property_type,
+        source.old_new,
+        source.duration,
+        source.paon,
+        source.saon,
+        source.street,
+        source.locality,
+        source.town_city,
+        source.district,
+        source.county,
+        source.ppd_category_type,
+        source.record_status
+      )
+    """
+
+    merge_job = client.query(merge_sql)
+    merge_job.result()
+
+    target = client.get_table(target_table)
+    print(f"Merge complete. Total rows in target table: {target.num_rows:,}")
+    
 # ─── MAIN ─────────────────────────────────────────────────
 def main():
     run_month = get_run_month()
